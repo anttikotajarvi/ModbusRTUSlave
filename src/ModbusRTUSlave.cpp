@@ -161,6 +161,13 @@ void ModbusRTUSlave::_processReadCoils() {
   else if (quantity == 0 || quantity > 2000) _exceptionResponse(3);
   else if (quantity > _numCoils || startAddress > (_numCoils - quantity)) _exceptionResponse(2);
   else {
+
+    if (middlewareFunction != nullptr) middlewareFunction(
+        ModbusFunctionCode::READ_COILS,
+        startAddress,
+        quantity
+    );
+
     _buf[2] = _div8RndUp(quantity);
     for (uint16_t i = 0; i < quantity; i++) {
       bitWrite(_buf[3 + (i >> 3)], i & 7, _coils[startAddress + i]);
@@ -176,6 +183,13 @@ void ModbusRTUSlave::_processReadDiscreteInputs() {
   else if (quantity == 0 || quantity > 2000) _exceptionResponse(3);
   else if (quantity > _numDiscreteInputs || startAddress > (_numDiscreteInputs - quantity)) _exceptionResponse(2);
   else {
+
+    if (middlewareFunction != nullptr) middlewareFunction(
+        ModbusFunctionCode::READ_DISCRETE_INPUTS,
+        startAddress,
+        quantity
+    );
+
     _buf[2] = _div8RndUp(quantity);
     for (uint16_t i = 0; i < quantity; i++) {
       bitWrite(_buf[3 + (i >> 3)], i & 7, _discreteInputs[startAddress + i]);
@@ -191,6 +205,13 @@ void ModbusRTUSlave::_processReadHoldingRegisters() {
   else if (quantity == 0 || quantity > 125) _exceptionResponse(3);
   else if (quantity > _numHoldingRegisters || startAddress > (_numHoldingRegisters - quantity)) _exceptionResponse(2);
   else {
+
+    if (middlewareFunction != nullptr) middlewareFunction(
+        ModbusFunctionCode::READ_HOLDING_REGISTERS,
+        startAddress,
+        quantity
+    );
+
     _buf[2] = quantity * 2;
     for (uint16_t i = 0; i < quantity; i++) {
       _buf[3 + (i * 2)] = highByte(_holdingRegisters[startAddress + i]);
@@ -207,6 +228,13 @@ void ModbusRTUSlave::_processReadInputRegisters() {
   else if (quantity == 0 || quantity > 125) _exceptionResponse(3);
   else if (quantity > _numInputRegisters || startAddress > (_numInputRegisters - quantity)) _exceptionResponse(2);
   else {
+
+    if (middlewareFunction != nullptr) middlewareFunction(
+        ModbusFunctionCode::READ_INPUT_REGISTERS,
+        startAddress,
+        quantity
+    );
+
     _buf[2] = quantity * 2;
     for (uint16_t i = 0; i < quantity; i++) {
       _buf[3 + (i * 2)] = highByte(_inputRegisters[startAddress + i]);
@@ -225,6 +253,15 @@ void ModbusRTUSlave::_processWriteSingleCoil() {
   else {
     _coils[address] = value;
     _writeResponse(6);
+
+    if (middlewareFunction != nullptr) {
+      middlewareFunction(
+        ModbusFunctionCode::WRITE_SINGLE_COIL,
+        address,
+        value
+      );
+    }
+
   }
 }
 
@@ -236,6 +273,15 @@ void ModbusRTUSlave::_processWriteSingleHoldingRegister() {
   else {
     _holdingRegisters[address] = value;
     _writeResponse(6);
+
+    if (middlewareFunction != nullptr) {
+      middlewareFunction(
+        ModbusFunctionCode::WRITE_SINGLE_HOLDING_REGISTER,
+        address,
+        value
+      );
+    }
+
   }
 }
 
@@ -250,6 +296,15 @@ void ModbusRTUSlave::_processWriteMultipleCoils() {
       _coils[startAddress + i] = bitRead(_buf[7 + (i >> 3)], i & 7);
     }
     _writeResponse(6);
+
+    if (middlewareFunction != nullptr) {
+      middlewareFunction(
+        ModbusFunctionCode::WRITE_MULTIPLE_COILS,
+        startAddress,
+        quantity
+      );
+    }
+
   }
 }
 
@@ -264,6 +319,15 @@ void ModbusRTUSlave::_processWriteMultipleHoldingRegisters() {
       _holdingRegisters[startAddress + i] = _bytesToWord(_buf[i * 2 + 7], _buf[i * 2 + 8]);
     }
     _writeResponse(6);
+
+    if (middlewareFunction != nullptr) {
+      middlewareFunction(
+        ModbusFunctionCode::WRITE_MULTIPLE_HOLDING_REGISTERS,
+        startAddress,
+        quantity
+      );
+    }
+
   }
 }
 

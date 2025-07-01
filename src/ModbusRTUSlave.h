@@ -10,6 +10,28 @@
 #include <SoftwareSerial.h>
 #endif
 
+// As per modbus spec
+enum ModbusFunctionCode {
+    READ_COILS                          = 0x01, // Read Coils
+    READ_DISCRETE_INPUTS                = 0x02, // Read Discrete Inputs
+    READ_HOLDING_REGISTERS              = 0x03, // Read Holding Registers
+    READ_INPUT_REGISTERS                = 0x04, // Read Input Registers
+    WRITE_SINGLE_COIL                   = 0x05, // Write Single Coil
+    WRITE_SINGLE_HOLDING_REGISTER       = 0x06, // Write Single Holding Register
+    WRITE_MULTIPLE_COILS                = 0x0F, // Write Multiple Coils
+    WRITE_MULTIPLE_HOLDING_REGISTERS    = 0x10, // Write Multiple Holding Registers
+};
+
+// Executes with effected registers
+// On reads: Triggers before replying.
+// On writes: Triggers after writing to registers and replying.
+typedef void (*RequestMiddleware)(
+                                    ModbusFunctionCode functionCode,
+                                    uint16_t startAddress, 
+                                    uint8_t quantity 
+                                    );
+
+
 class ModbusRTUSlave {
   public:
     ModbusRTUSlave(HardwareSerial& serial, uint8_t dePin = NO_DE_PIN);
@@ -30,6 +52,8 @@ class ModbusRTUSlave {
     #endif
     void poll();
     
+    RequestMiddleware middlewareFunction;
+
   private:
     HardwareSerial *_hardwareSerial;
     #ifdef __AVR__
